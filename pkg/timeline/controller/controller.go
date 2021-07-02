@@ -2,67 +2,130 @@ package controller
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	// timeLineModel "github.com/time-line-backend/pkg/model/mysql"
+	"github.com/my-Sakura/time-line-backend/pkg/timeline/model/mysql"
 )
 
-var (
-	deleted int8
-
-	errDeleted         = errors.New("the user has been deleted")
-	errActive          = errors.New("the user is not active")
-	errUserIDNotExists = errors.New("Get Admin ID is not exists")
-	errUserIDNotValid  = func(value interface{}) error {
-		return fmt.Errorf("Get Admin ID is not valid. Is %s", value)
-	}
-)
-
-type UserController struct {
-	db  *sql.DB
-	JWT *jwt.GinJWTMiddleware
+type TimeLineController struct {
+	db *sql.DB
 }
 
-func New(db *sql.DB) *UserController {
-	uc := &UserController{
+func New(db *sql.DB) *TimeLineController {
+	tc := &TimeLineController{
 		db: db,
 	}
 
-	var err error
-
-	uc.JWT, err = uc.newJWTMiddleware()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return uc
+	return tc
 }
 
-func (uc *UserController) RegistRouter(r gin.IRouter) {
+func (tc *TimeLineController) RegistRouter(r gin.IRouter) {
 	if r == nil {
 		log.Fatal("[InitRouter] server is nil")
 	}
 
-	err := mysql.CreateDatabase(uc.db)
+	err := mysql.CreateDatabase(tc.db)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	r.POST("/get", uc.get)
-}
-
-func (uc *UserController) get() {
+	err = mysql.CreateTimeLine(tc.db)
 	if err != nil {
-		_ = c.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
-		return 0, err
+		log.Fatal(err)
 	}
 
-	timeLine := SelectAllUnDeletedTimeLine(uc.db)
+	r.GET("/get", tc.get)
 
-	c.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "data": timeLine})
+	r.POST("/add", tc.add)
+	r.POST("/delete", tc.delete)
+	r.POST("/update", tc.update)
+}
+
+func (tc *TimeLineController) get(c *gin.Context) {
+	timeLine, err := mysql.SelectAllUnDeletedTimeLine(tc.db)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusOK, gin.H{"error": http.StatusInternalServerError, "data": timeLine})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": timeLine})
+}
+
+func (tc *TimeLineController) add(c *gin.Context) {
+	var req struct {
+		Title     string    `json:"title"`
+		Value     string    `json:"value"`
+		Label     string    `json:"label"`
+		EventTime time.Time `json:"event_time"`
+	}
+
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusOK, gin.H{"status": http.StatusInternalServerError})
+		return
+	}
+
+	err = mysql.InsertTimeLine(tc.db, req.Title, req.Value, req.Label, req.EventTime)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusOK, gin.H{"status": http.StatusInternalServerError})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": http.StatusOK})
+}
+
+func (tc *TimeLineController) delete(c *gin.Context) {
+	var req struct {
+		ID uint32 `json:"id"`
+	}
+
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusOK, gin.H{"status": http.StatusInternalServerError})
+		return
+	}
+
+	err = mysql.DeleteTimeLine(tc.db, req.ID)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusOK, gin.H{"status": http.StatusInternalServerError})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": http.StatusOK})
+}
+
+func (tc *TimeLineController) update(c *gin.Context) {
+	var req struct {
+		ID        uint32    `json:"id"`
+		Title     string    `json:"title"`
+		Value     string    `json:"value"`
+		Label     string    `json:"label"`
+		Color     string    `json:"color"`
+		EventTime time.Time `json:"event_time"`
+	}
+
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusOK, gin.H{"status": http.StatusInternalServerError})
+		return
+	}
+	fmt.Println(req, "--")
+	err = mysql.UpdateTimeLineByID(tc.db, req.ID, req.Title, req.Value, req.Label, req.Color, req.EventTime)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusOK, gin.H{"status": http.StatusInternalServerError})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": http.StatusOK})
 }
