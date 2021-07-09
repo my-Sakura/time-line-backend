@@ -6,11 +6,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
+	account "github.com/my-Sakura/time-line-backend/pkg/account/controller"
 	timeLine "github.com/my-Sakura/time-line-backend/pkg/timeline/controller"
 )
 
 const (
 	timeLineRouterGroup = "/api/v1/timeLine"
+	accountRouterGroup  = "/api/v1/account"
 )
 
 func main() {
@@ -22,19 +24,10 @@ func main() {
 	}
 
 	timeLineConn := timeLine.New(dbConn)
+	accountConn := account.New(dbConn)
 
 	timeLineConn.RegistRouter(router.Group(timeLineRouterGroup))
+	accountConn.RegistRouter(router.Group(accountRouterGroup))
 
 	log.Fatal(router.Run("0.0.0.0:10002"))
 }
-
-docker volume create timeline-mysql-config
-docker volume create timeline-mysql-data
-docker volume create timeline-mysql-log
-docker run --name timeline -p 9092:3306 \ 
-  --mount type=volume,src=timeline-mysql-config,dst=/etc/mysql \
-  --mount type=volume,src=timeline-mysql-data,dst=/var/lib/mysql \
-  --mount type=volume,src=timeline-mysql-log,dst=/var/log/mysql \
-  -e MYSQL\_ROOT\_PASSWORD=123456 \
-	-d mysql:5.7
-	
