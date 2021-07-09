@@ -39,6 +39,7 @@ func (tc *TimeLineController) RegistRouter(r gin.IRouter) {
 	}
 
 	r.GET("/get", tc.get)
+	r.GET("/getByLabel", tc.getByLabel)
 
 	r.POST("/add", tc.add)
 	r.POST("/delete", tc.delete)
@@ -47,6 +48,28 @@ func (tc *TimeLineController) RegistRouter(r gin.IRouter) {
 
 func (tc *TimeLineController) get(c *gin.Context) {
 	timeLine, err := mysql.SelectAllUnDeletedTimeLine(tc.db)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusOK, gin.H{"error": http.StatusInternalServerError, "data": timeLine})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": timeLine})
+}
+
+func (tc *TimeLineController) getByLabel(c *gin.Context) {
+	var req struct {
+		Label string `json:"label"`
+	}
+
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError})
+		return
+	}
+
+	timeLine, err := mysql.SelectByColorUnDeletedTimeLine(tc.db, req.Label)
 	if err != nil {
 		_ = c.Error(err)
 		c.JSON(http.StatusOK, gin.H{"error": http.StatusInternalServerError, "data": timeLine})
@@ -67,7 +90,7 @@ func (tc *TimeLineController) add(c *gin.Context) {
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		_ = c.Error(err)
-		c.JSON(http.StatusOK, gin.H{"status": http.StatusInternalServerError})
+		c.JSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError})
 		return
 	}
 

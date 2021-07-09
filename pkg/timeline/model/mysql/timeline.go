@@ -28,6 +28,7 @@ const (
 	mysqlTimelineDelete
 	mysqlTimeLineUpdateByID
 	mysqlTimeLineSelectAllUnDeleted
+	mysqlTimeLineSelectByLabelUnDeleted
 )
 
 var (
@@ -47,6 +48,7 @@ var (
 		fmt.Sprintf(`UPDATE %s.%s SET deleted=? WHERE id=?`, DBName, TableName),
 		fmt.Sprintf(`UPDATE %s.%s SET title = ?, value = ?, label=?, event_time=? WHERE id=?`, DBName, TableName),
 		fmt.Sprintf(`SELECT id, value,label,title,event_time FROM %s.%s WHERE deleted = ?`, DBName, TableName),
+		fmt.Sprintf(`SELECT id, value,label,title,event_time FROM %s.%s WHERE deleted = ? AND label=?`, DBName, TableName),
 	}
 )
 
@@ -120,6 +122,43 @@ func SelectAllUnDeletedTimeLine(db *sql.DB) ([]*TimeLine, error) {
 	)
 
 	rows, err := db.Query(TimeLineSQLString[mysqlTimeLineSelectAllUnDeleted], false)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(&ID, &Value, &Label, &Title, &EventTime); err != nil {
+
+			return nil, err
+		}
+
+		TimeLine := &TimeLine{
+			ID:        ID,
+			Value:     Value,
+			Label:     Label,
+			Title:     Title,
+			EventTime: EventTime,
+		}
+
+		TimeLines = append(TimeLines, TimeLine)
+	}
+
+	return TimeLines, nil
+}
+
+func SelectByColorUnDeletedTimeLine(db *sql.DB, label string) ([]*TimeLine, error) {
+	var (
+		TimeLines []*TimeLine
+
+		ID        uint32
+		Value     string
+		Label     string
+		Title     string
+		EventTime time.Time
+	)
+
+	rows, err := db.Query(TimeLineSQLString[mysqlTimeLineSelectByLabelUnDeleted], false, label)
 	if err != nil {
 		return nil, err
 	}
