@@ -2,7 +2,6 @@ package controller
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -39,7 +38,7 @@ func (tc *TimeLineController) RegistRouter(r gin.IRouter) {
 	}
 
 	r.GET("/get", tc.get)
-	r.GET("/getByLabel", tc.getByLabel)
+	r.POST("/getByLabel", tc.getByLabel)
 
 	r.POST("/add", tc.add)
 	r.POST("/delete", tc.delete)
@@ -142,7 +141,6 @@ func (tc *TimeLineController) update(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": http.StatusInternalServerError})
 		return
 	}
-	fmt.Println(req, "--")
 	err = mysql.UpdateTimeLineByID(tc.db, req.ID, req.Title, req.Value, req.Label, req.Color, req.EventTime)
 	if err != nil {
 		_ = c.Error(err)

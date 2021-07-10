@@ -2,7 +2,6 @@ package controller
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -45,7 +44,6 @@ func (ac *AccountController) login(c *gin.Context) {
 		Password string `json:"password"`
 	}
 
-	fmt.Println(req)
 	err := c.ShouldBind(&req)
 	if err != nil {
 		_ = c.Error(err)
