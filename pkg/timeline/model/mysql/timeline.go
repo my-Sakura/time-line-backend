@@ -15,7 +15,6 @@ var (
 type TimeLine struct {
 	ID        uint32    `json::"id"`
 	Value     string    `json:"value"`
-	Color     string    `json:"color"`
 	Label     string    `json:"label"`
 	Title     string    `json:"title"`
 	EventTime time.Time `json:"event_time"`
@@ -41,14 +40,14 @@ var (
 			title VARCHAR(128) NOT NULL DEFAULT '' COMMENT'每个节点标题',
 			deleted BOOLEAN NOT NULL DEFAULT FALSE COMMENT '删除位',
 			value VARCHAR(2048) NOT NULL COMMENT'timeline 每个节点具体内容',
-			label ENUM ('大事记', '政策', '反腐', '事件') NOT  NULL DEFAULT '大事记' COMMENT '标签',
+			label ENUM ('大事件', '政策新规', '反腐', '重磅发言') NOT  NULL DEFAULT '大事件' COMMENT '标签',
 			event_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT'事件发生时间'
 		)ENGINE=InnoDB CHARSET=utf8mb4 COLLATE=utf8mb4_bin;`, DBName, TableName),
-		fmt.Sprintf(`INSERT INTO %s.%s (title, deleted, value, label,event_time) VALUES (?,?, ?, ?,?)`, DBName, TableName),
+		fmt.Sprintf(`INSERT INTO %s.%s (title, deleted, value, label, event_time) VALUES (?, ?,?, ?,?)`, DBName, TableName),
 		fmt.Sprintf(`UPDATE %s.%s SET deleted=? WHERE id=?`, DBName, TableName),
 		fmt.Sprintf(`UPDATE %s.%s SET title = ?, value = ?, label=?, event_time=? WHERE id=?`, DBName, TableName),
-		fmt.Sprintf(`SELECT id, value,label,title,event_time FROM %s.%s WHERE deleted = ?`, DBName, TableName),
-		fmt.Sprintf(`SELECT id, value,label,title,event_time FROM %s.%s WHERE deleted = ? AND label=?`, DBName, TableName),
+		fmt.Sprintf(`SELECT id, value,label, title,event_time FROM %s.%s WHERE deleted = ?`, DBName, TableName),
+		fmt.Sprintf(`SELECT id, value,label, title,event_time FROM %s.%s WHERE deleted = ? AND label=?`, DBName, TableName),
 	}
 )
 
@@ -101,7 +100,7 @@ func DeleteTimeLine(db *sql.DB, id uint32) error {
 	return nil
 }
 
-func UpdateTimeLineByID(db *sql.DB, id uint32, title, value, label, color string, eventTime time.Time) error {
+func UpdateTimeLineByID(db *sql.DB, id uint32, title, value, label string, eventTime time.Time) error {
 	_, err := db.Exec(TimeLineSQLString[mysqlTimeLineUpdateByID], title, value, label, eventTime, id)
 	if err != nil {
 		return err
@@ -126,7 +125,6 @@ func SelectAllUnDeletedTimeLine(db *sql.DB) ([]*TimeLine, error) {
 		return nil, err
 	}
 	defer rows.Close()
-
 	for rows.Next() {
 		if err := rows.Scan(&ID, &Value, &Label, &Title, &EventTime); err != nil {
 
@@ -147,7 +145,7 @@ func SelectAllUnDeletedTimeLine(db *sql.DB) ([]*TimeLine, error) {
 	return TimeLines, nil
 }
 
-func SelectByColorUnDeletedTimeLine(db *sql.DB, label string) ([]*TimeLine, error) {
+func SelectByLabelUnDeletedTimeLine(db *sql.DB, label string) ([]*TimeLine, error) {
 	var (
 		TimeLines []*TimeLine
 

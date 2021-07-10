@@ -68,7 +68,7 @@ func (tc *TimeLineController) getByLabel(c *gin.Context) {
 		return
 	}
 
-	timeLine, err := mysql.SelectByColorUnDeletedTimeLine(tc.db, req.Label)
+	timeLine, err := mysql.SelectByLabelUnDeletedTimeLine(tc.db, req.Label)
 	if err != nil {
 		_ = c.Error(err)
 		c.JSON(http.StatusOK, gin.H{"error": http.StatusInternalServerError, "data": timeLine})
@@ -131,7 +131,6 @@ func (tc *TimeLineController) update(c *gin.Context) {
 		Title     string    `json:"title"`
 		Value     string    `json:"value"`
 		Label     string    `json:"label"`
-		Color     string    `json:"color"`
 		EventTime time.Time `json:"event_time"`
 	}
 
@@ -141,7 +140,7 @@ func (tc *TimeLineController) update(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": http.StatusInternalServerError})
 		return
 	}
-	err = mysql.UpdateTimeLineByID(tc.db, req.ID, req.Title, req.Value, req.Label, req.Color, req.EventTime)
+	err = mysql.UpdateTimeLineByID(tc.db, req.ID, req.Title, req.Value, req.Label, req.EventTime)
 	if err != nil {
 		_ = c.Error(err)
 		c.JSON(http.StatusOK, gin.H{"status": http.StatusInternalServerError})
