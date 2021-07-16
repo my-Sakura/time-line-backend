@@ -37,7 +37,8 @@ func (tc *TimeLineController) RegistRouter(r gin.IRouter) {
 		log.Fatal(err)
 	}
 
-	r.GET("/get", tc.get)
+	r.GET("/getOrderByCreateTime", tc.getOrderByCreateTime)
+	r.GET("/getOrderByEventTime", tc.getOrderByEventTime)
 	r.POST("/getByLabel", tc.getByLabel)
 
 	r.POST("/add", tc.add)
@@ -45,8 +46,19 @@ func (tc *TimeLineController) RegistRouter(r gin.IRouter) {
 	r.POST("/update", tc.update)
 }
 
-func (tc *TimeLineController) get(c *gin.Context) {
-	timeLine, err := mysql.SelectAllUnDeletedTimeLine(tc.db)
+func (tc *TimeLineController) getOrderByCreateTime(c *gin.Context) {
+	timeLine, err := mysql.SelectAllUnDeletedTimeLineOrderByCreateTime(tc.db)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusOK, gin.H{"error": http.StatusInternalServerError, "data": timeLine})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": timeLine})
+}
+
+func (tc *TimeLineController) getOrderByEventTime(c *gin.Context) {
+	timeLine, err := mysql.SelectAllUnDeletedTimeLineOrderByEventTime(tc.db)
 	if err != nil {
 		_ = c.Error(err)
 		c.JSON(http.StatusOK, gin.H{"error": http.StatusInternalServerError, "data": timeLine})
