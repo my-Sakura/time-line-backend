@@ -18,7 +18,7 @@ const (
 func main() {
 	router := gin.Default()
 
-	dbConn, err := sql.Open("mysql", "root:123456@tcp(172.30.252.153:9092)/mysql?charset=utf8mb4&parseTime=true&loc=Local")
+	dbConn, err := sql.Open("mysql", "root:123456@tcp(mysql:3306)/mysql?charset=utf8mb4&parseTime=true&loc=Local")
 	if err != nil {
 		panic(err)
 	}
