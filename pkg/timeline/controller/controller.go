@@ -2,7 +2,6 @@ package controller
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -105,7 +104,6 @@ func (tc *TimeLineController) add(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError})
 		return
 	}
-	fmt.Println(req)
 
 	err = mysql.InsertTimeLine(tc.db, req.Title, req.Value, req.Label, req.EventTime)
 	if err != nil {
