@@ -2,6 +2,7 @@ package controller
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -92,10 +93,10 @@ func (tc *TimeLineController) getByLabel(c *gin.Context) {
 
 func (tc *TimeLineController) add(c *gin.Context) {
 	var req struct {
-		Title     string    `json:"title"`
-		Value     string    `json:"value"`
-		Label     string    `json:"label"`
-		EventTime time.Time `json:"event_time"`
+		Title     string    `json:"title" binding:"required"`
+		Value     string    `json:"value" binding:"required"`
+		Label     string    `json:"label" binding:"required"`
+		EventTime time.Time `json:"event_time" binding:"required"`
 	}
 
 	err := c.ShouldBindJSON(&req)
@@ -104,6 +105,7 @@ func (tc *TimeLineController) add(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"status": http.StatusInternalServerError})
 		return
 	}
+	fmt.Println(req)
 
 	err = mysql.InsertTimeLine(tc.db, req.Title, req.Value, req.Label, req.EventTime)
 	if err != nil {

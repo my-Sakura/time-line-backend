@@ -2,12 +2,14 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	account "github.com/my-Sakura/time-line-backend/pkg/account/controller"
-	timeLine "github.com/my-Sakura/time-line-backend/pkg/timeline/controller"
+	timeline "github.com/my-Sakura/time-line-backend/pkg/timeline/controller"
 )
 
 const (
@@ -16,6 +18,7 @@ const (
 )
 
 func main() {
+	fmt.Println(time.Now())
 	router := gin.Default()
 
 	dbConn, err := sql.Open("mysql", "root:123456@tcp(mysql:3306)/mysql?charset=utf8mb4&parseTime=true&loc=Local")
@@ -23,7 +26,7 @@ func main() {
 		panic(err)
 	}
 
-	timeLineConn := timeLine.New(dbConn)
+	timeLineConn := timeline.New(dbConn)
 	accountConn := account.New(dbConn)
 
 	timeLineConn.RegistRouter(router.Group(timeLineRouterGroup))
